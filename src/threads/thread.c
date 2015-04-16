@@ -172,7 +172,7 @@ thread_create (const char *name, int priority,
   struct switch_threads_frame *sf;
   tid_t tid;
   enum intr_level old_level;
-
+  
   ASSERT (function != NULL);
 
   /* Allocate thread. */
@@ -183,7 +183,8 @@ thread_create (const char *name, int priority,
   /* Initialize thread. */
   init_thread (t, name, priority);
   tid = t->tid = allocate_tid ();
-
+  t->ticks_blocked = 0;
+  
   /* Prepare thread for first run by initializing its stack.
      Do this atomically so intermediate values for the 'stack' 
      member cannot be observed. */
@@ -245,7 +246,9 @@ thread_unblock (struct thread *t)
 
   old_level = intr_disable ();
   ASSERT (t->status == THREAD_BLOCKED);
-  list_push_back (&ready_list, &t->elem);
+//list_push_back (&ready_list, &t->elem);
+  list_insert_ordered(&ready_list, &t->elem, priority_less, NULL);
+  
   t->status = THREAD_READY;
   intr_set_level (old_level);
 }
@@ -316,7 +319,7 @@ thread_yield (void)
 
   old_level = intr_disable ();
   if (cur != idle_thread) 
-    list_push_back (&ready_list, &cur->elem);
+    list_insert_ordered (&ready_list, &cur->elem, priority_less, NULL);
   cur->status = THREAD_READY;
   schedule ();
   intr_set_level (old_level);
@@ -585,3 +588,22 @@ allocate_tid (void)
 /* Offset of `stack' member within `struct thread'.
    Used by switch.S, which can't figure it out on its own. */
 uint32_t thread_stack_ofs = offsetof (struct thread, stack);
+
+void checkInvoke(struct thread* t, void* aux UNUSED)
+{
+  if(t->status == THREAD_BLOCKED && t->ticks_blocked > 0){
+    t->ticks_blocked--;
+    if(t->ticks_blocked == 0)
+      thread_unblock(t);
+  }
+}
+
+bool priority_less(const struct list_elem *a, const struct list_elem *b, void *aux)
+{
+  struct thread *a_thread, *b_thread;
+  a_thread = list_entry(a, struct thread, elem);
+  b_thread = list_entry(b, struct thread, elem);
+  return (a_thread->priority > b_thread->priority);
+}
+
+

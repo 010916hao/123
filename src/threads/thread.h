@@ -90,6 +90,8 @@ struct thread
     int priority;                       /* Priority. */
     struct list_elem allelem;           /* List element for all threads list. */
 
+    int ticks_blocked;
+
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* List element. */
 
@@ -137,5 +139,8 @@ int thread_get_nice (void);
 void thread_set_nice (int);
 int thread_get_recent_cpu (void);
 int thread_get_load_avg (void);
+
+void checkInvoke(struct thread* t, void* aux UNUSED);
+bool priority_less(const struct list_elem *a, const struct list_elem *b, void* aux);
 
 #endif /* threads/thread.h */
