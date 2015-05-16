@@ -349,12 +349,19 @@ thread_foreach (thread_action_func *func, void *aux)
 void
 thread_set_priority (int new_priority) 
 {
-  struct thread* t; 
-  thread_current ()->priority = new_priority;
+  struct thread  *t, *cur = thread_current(); 
+  if (cur->donated == false)
+    cur->priority = cur->old_priority = new_priority;
+  else
+  {
+    cur->old_priority = new_priority;
+    if (new_priority > cur->priority)
+     cur->priority = new_priority;
+  }
   
   if (list_size (&ready_list) > 0 ){
     t = list_entry(list_max(&ready_list, priority_less, NULL), struct thread, elem);
-    if ( new_priority < t->priority)
+    if ( cur->priority < t->priority)
       thread_yield();
   }
 }
@@ -483,6 +490,11 @@ init_thread (struct thread *t, const char *name, int priority)
   t->priority = priority;
   t->magic = THREAD_MAGIC;
   list_push_back (&all_list, &t->allelem);
+
+  t->old_priority = priority;
+  list_init (&t->locks);
+  t->blocked = NULL ;
+  t->donated = false;
 }
 
 /* Allocates a SIZE-byte frame at the top of thread T's stack and
@@ -616,4 +628,20 @@ bool priority_less(const struct list_elem *a, const struct list_elem *b, void *a
   return (a_thread->priority > b_thread->priority);
 }
 
+void
+thread_donate (struct thread *thrd)
+{
+  enum intr_level old_level = intr_disable();
+
+  list_sort (&thrd->locks, lock_priority, NULL);
+  thrd->priority = list_entry (list_front (&thrd->locks), struct lock, hold_elem)->priority;
+
+  if (thrd->status == THREAD_READY)
+  {
+    list_remove(&thrd->elem);
+    list_insert_ordered (&ready_list, &thrd->elem, priority_less, NULL);
+  }
+
+  intr_set_level (old_level);
+}
 

@@ -92,6 +92,11 @@ struct thread
 
     int ticks_blocked;
 
+    int old_priority;
+    struct list locks;
+    struct lock *blocked;
+    bool donated;
+
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* List element. */
 
@@ -142,5 +147,6 @@ int thread_get_load_avg (void);
 
 void checkInvoke(struct thread* t, void* aux UNUSED);
 bool priority_less(const struct list_elem *a, const struct list_elem *b, void* aux);
+void thread_donate(struct thread *t);
 
 #endif /* threads/thread.h */
