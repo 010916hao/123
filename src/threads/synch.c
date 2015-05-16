@@ -197,7 +197,7 @@ lock_init (struct lock *lock)
 void
 lock_acquire (struct lock *lock)
 {
-  struct thread *thrd, *cur=thread_current();
+  struct thread *cur=thread_current();
   struct lock *another;
   enum intr_level old_level;
 
@@ -209,18 +209,16 @@ lock_acquire (struct lock *lock)
 
   if (lock->holder != NULL)
   {
-    thrd = lock->holder;
     cur->blocked = another = lock;
-    while (another && thrd->priority < cur->priority )
+    while (another && another->priority < cur->priority )
     {
-      thrd = another->holder;
-      thrd->donated = true;
+      another->holder->donated = true;
       // donate
       another->priority = cur->priority;
 
-      thread_donate (thrd);
+      thread_donate (another->holder);
 
-      another = thrd->blocked;
+      another = another->holder->blocked;
     }
   }
 
