@@ -356,7 +356,7 @@ thread_set_priority (int new_priority)
   {
     cur->old_priority = new_priority;
     if (new_priority > cur->priority)
-     cur->priority = new_priority;
+      cur->priority = new_priority;
   }
   
   if (list_size (&ready_list) > 0 ){
