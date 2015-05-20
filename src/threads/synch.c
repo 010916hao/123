@@ -230,11 +230,11 @@ lock_acquire (struct lock *lock)
   cur->blocked = NULL;
   lock->priority = cur->priority;
   list_insert_ordered (&cur->locks, &lock->hold_elem, lock_priority, NULL);
-  if (lock->priority > cur->priority)
-  {
-    cur->priority = lock->priority;
-    thread_yield ();
-  }
+//if (lock->priority > cur->priority)
+//{
+//  cur->priority = lock->priority;
+//  thread_yield ();
+//}
 
   intr_set_level (old_level);
 }
