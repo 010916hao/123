@@ -4,6 +4,7 @@
 #include <debug.h>
 #include <list.h>
 #include <stdint.h>
+#include "fixed_point.h"
 
 /* States in a thread's life cycle. */
 enum thread_status
@@ -97,6 +98,10 @@ struct thread
     struct lock *blocked;
     bool donated;
 
+    // mlfqs
+    int nice;
+    int recent_cpu;
+
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* List element. */
 
@@ -148,5 +153,8 @@ int thread_get_load_avg (void);
 void checkInvoke(struct thread* t, void* aux UNUSED);
 bool priority_less(const struct list_elem *a, const struct list_elem *b, void* aux);
 void thread_donate(struct thread *t);
+void thread_mlfqs_update(struct thread *t);
+void thread_mlfqs_increase_recent_cpu();
+void thread_mlfqs_update_load_avg_and_recent_cpu();
 
 #endif /* threads/thread.h */
